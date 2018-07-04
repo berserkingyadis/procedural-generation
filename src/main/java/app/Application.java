@@ -6,12 +6,13 @@ import java.awt.event.MouseEvent;
 public class Application {
     public static void main(String[] args) {
 
-        int width = 100;
-        int height = 100;
-        int scale = 10;
+        int width = 1000;
+        int height = 1000;
+        int scale = 4;
         int step_thresh=5;
 
-        Cave c = new Cave(width, height, scale, step_thresh);
+        Cave c = new Cave(scale, width, height, step_thresh);
+
 
 
 
