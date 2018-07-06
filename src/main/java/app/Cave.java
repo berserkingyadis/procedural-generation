@@ -30,11 +30,13 @@ public class Cave extends JFrame {
     }
 
 
-    private int scale;
-    private int width;
-    private int height;
-    private int step_thresh;
-    private int seed;
+    private int scale;          //width-height of every cell in pixels
+    private int width;          //width of cave
+    private int height;         //height of cave
+    private int step_thresh;    //how many rocks must be around a cell in order for it becoming a rock
+    private int seed;           //seed of the RNG
+    private int cave_n;         //current amount of steps in cave generation
+    private int trees_n;        //current amount of steps in tree generation
 
 
 
@@ -108,7 +110,7 @@ public class Cave extends JFrame {
 
     public void benchmark() {
         reset();
-        long cave_t, trees_t, cave_n = 0, trees_n=0;
+        long cave_t, trees_t;
         long start = System.currentTimeMillis();
         //step until nothing changes
         while(step())++cave_n;
@@ -149,7 +151,7 @@ public class Cave extends JFrame {
 
         drawCave(g2d);
 
-        String filename = seed + "s-"+width+"w+"+height+"h.png";
+        String filename = filename();
         try {
             ImageIO.write(image, "PNG", new File(filename));
             System.out.println("Cave saved as "+filename);
@@ -161,8 +163,13 @@ public class Cave extends JFrame {
     }
 
 
-
+    private String filename(){
+        return seed + "s-"+cave_n+"cn-"+trees_n+"tn-"+width+"w-"+height+"h.png";
+    }
     public void reset(){
+        this.cave_n=0;
+        this.trees_n=0;
+
         for (int i = 0; i < cells.length; i++) {
             for (int j = 0; j < cells[i].length; j++) {
                 cells[i][j] = (try_(50))?CELL_TYPE.FREE:CELL_TYPE.ROCK;
