@@ -11,6 +11,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javax.imageio.ImageIO;
@@ -33,27 +34,34 @@ public class Cave extends JFrame {
     private int width;
     private int height;
     private int step_thresh;
+    private int seed;
 
 
 
-    public Cave(){
-
-    }
     private final Color rock = new Color(128, 128, 128);
     private final Color free = Color.WHITE;
     private final Color stump = new Color(77,26,0);
     private final Color mid = new Color(153, 51, 0);
     private final Color top = new Color(0, 102, 0);
 
-    public Cave(int scale, int width, int height, int step_thresh) {
+    private Random r;
+
+    private void initValues(int scale, int width, int height, int step_thresh){
         cells = new CELL_TYPE[width][height];
         this.width=width;
         this.height=height;
         this.scale = scale;
         this.step_thresh = step_thresh;
+    }
 
-        reset();
+    private void setupUI(){
 
+        this.setSize(width*scale, height*scale);
+        this.setResizable(false);
+        this.setTitle("q=make cave w=grow trees e=reset r=quit a=benchmark");
+        this.setVisible(true);
+    }
+    private void registerInteractions(){
         this.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -66,17 +74,36 @@ public class Cave extends JFrame {
                         reset(); repaint(); break;
                     case KeyEvent.VK_A:
                         benchmark(); repaint(); break;
+                    case KeyEvent.VK_S:
+                        System.out.println("Seed: " + seed); break;
+                    case KeyEvent.VK_D:
+                        savePNG(); break;
                     case KeyEvent.VK_R:
                         System.exit(0);
                 }
             }
         });
+    }
+    public Cave(int scale, int width, int height, int step_thresh, int seed) {
 
+        this.seed = seed;
 
-        this.setSize(width*scale, height*scale);
-        this.setResizable(false);
-        this.setTitle("q=make cave w=grow trees e=reset r=quit a=benchmark");
-        this.setVisible(true);
+        r = new Random(seed);
+
+        initValues(scale, width, height, step_thresh);
+        reset();
+        registerInteractions();
+        setupUI();
+    }
+
+    public Cave(int scale, int width, int height, int step_thresh){
+        r = new Random();
+        seed = randInt(1, 88888888);
+        r = new Random(seed);
+        initValues(scale, width, height, step_thresh);
+        reset();
+        registerInteractions();
+        setupUI();
     }
 
     public void benchmark() {
@@ -92,16 +119,13 @@ public class Cave extends JFrame {
         trees_t = System.currentTimeMillis()-start;
         System.out.println("Cave generation performance report:");
         System.out.println("Cave size = " + cells.length + " x " + cells[0].length);
+        System.out.println("Seed = "+seed);
         System.out.println("Generating Cave in "+cave_n+" steps took "+cave_t+ " milliseconds.");
         System.out.println("Generating Trees in "+trees_n+" steps took "+trees_t+" milliseconds.");
         System.out.println("Total time is "+(cave_t+trees_t)+" milliseconds.");
     }
 
-    public void savePNG() {
-        BufferedImage image = new BufferedImage(width*scale, height*scale, BufferedImage.TYPE_INT_ARGB);
-
-        Graphics2D g2d = image.createGraphics();
-
+    private void drawCave(Graphics2D g2d){
         for (int i = 0; i < cells.length; i++) {
             for (int j = 0; j < cells[i].length; j++) {
                 switch(get(i,j)){
@@ -117,9 +141,18 @@ public class Cave extends JFrame {
                 g2d.fillRect(i*scale,j*scale, scale, scale);
             }
         }
+    }
+    public void savePNG() {
+        BufferedImage image = new BufferedImage(width*scale, height*scale, BufferedImage.TYPE_INT_ARGB);
 
+        Graphics2D g2d = image.createGraphics();
+
+        drawCave(g2d);
+
+        String filename = seed + "s-"+width+"w+"+height+"h.png";
         try {
-            ImageIO.write(image, "PNG", new File("hi.png"));
+            ImageIO.write(image, "PNG", new File(filename));
+            System.out.println("Cave saved as "+filename);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -142,23 +175,7 @@ public class Cave extends JFrame {
     public void paint(Graphics g) {
        Graphics2D g2d = (Graphics2D)g;
 
-        for (int i = 0; i < cells.length; i++) {
-            for (int j = 0; j < cells[i].length; j++) {
-                switch(get(i,j)){
-                    case TREE_MID: g2d.setColor(mid);break;
-                    case ROCK: g2d.setColor(rock);break;
-                    case TREE_STUMP: g2d.setColor(stump);break;
-                    case TREE_TOP: g2d.setColor(top);break;
-                    case FREE: g2d.setColor(free);break;
-
-
-
-                }
-                g2d.fillRect(i*scale,j*scale, scale, scale);
-            }
-        }
-
-
+       drawCave(g2d);
     }
 
 
@@ -203,9 +220,17 @@ public class Cave extends JFrame {
     }
 
 
+
     private int randInt(int low, int high){
-        return ThreadLocalRandom.current().nextInt(low,high+1);
+
+        return r.nextInt((high - low) + 1) + low;
     }
+
+    private int randInt(){
+        return randInt(0,100);
+    }
+
+
     private boolean try_(int p){
         return (randInt(0,99)>=p)?true:false;
     }
