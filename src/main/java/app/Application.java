@@ -6,8 +6,8 @@ import java.awt.event.MouseEvent;
 public class Application {
     public static void main(String[] args) {
 
-        int width = 200;
-        int height = 200;
+        int width = 400;
+        int height = 300;
         int scale = 3;
         int step_thresh=5;
 
